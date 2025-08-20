@@ -9,11 +9,8 @@ let me = 'me';
 let them = 'them';
 
 // --- Chat switching logic ---
-const chatList = [
-    { id: 'family', name: 'Family' },
-    { id: 'balaton2025', name: 'Balaton 2025' }
-];
-let currentChatId = chatList[0].id;
+const chatList = [];
+let currentChatId = null;
 
 function getStorageKey(chatId) {
     return `send-messages-${chatId}`;
@@ -25,7 +22,9 @@ function loadMessages(chatId) {
 }
 
 function saveMessages() {
-    localStorage.setItem(getStorageKey(currentChatId), JSON.stringify(messages));
+    if (currentChatId) {
+        localStorage.setItem(getStorageKey(currentChatId), JSON.stringify(messages));
+    }
 }
 
 function renderChatTabs() {
@@ -40,6 +39,15 @@ function renderChatTabs() {
         document.getElementById('chat-header').prepend(tabs);
     }
     tabs.innerHTML = '';
+    if (chatList.length === 0) {
+        const msg = document.createElement('div');
+        msg.textContent = 'Start by adding a new chat!';
+        msg.style.color = '#fff';
+        msg.style.fontWeight = 'bold';
+        msg.style.fontSize = '1.1em';
+        msg.style.margin = '0 12px 0 0';
+        tabs.appendChild(msg);
+    }
     chatList.forEach((chat, idx) => {
         const btn = document.createElement('button');
         btn.textContent = chat.name;
@@ -83,26 +91,58 @@ function renderChatTabs() {
             del.onclick = (e) => {
                 e.stopPropagation();
                 if (confirm(`Delete chat '${chat.name}'?`)) {
-                    // Remove messages for this chat
                     localStorage.removeItem(getStorageKey(chat.id));
                     chatList.splice(idx, 1);
-                    // Switch to another chat if needed
                     if (currentChatId === chat.id) {
-                        currentChatId = chatList[0].id;
-                        loadMessages(currentChatId);
+                        currentChatId = chatList.length ? chatList[0].id : null;
+                        if (currentChatId) loadMessages(currentChatId);
+                        else {
+                            messages = [];
+                            renderMessages();
+                        }
                     }
                     renderChatTabs();
                 }
             };
             btn.appendChild(del);
         }
+        // Add 'Add User' button
+        const addUser = document.createElement('span');
+        addUser.textContent = ' ➕';
+        addUser.style.cursor = 'pointer';
+        addUser.style.marginLeft = '4px';
+        addUser.title = 'Add user to this chat by phone number';
+        addUser.onclick = (e) => {
+            e.stopPropagation();
+            let phone = '';
+            while (!phone) {
+                phone = prompt('Enter phone number to add (required):');
+                if (!phone || !phone.trim()) {
+                    alert('Phone number is required!');
+                    phone = '';
+                } else {
+                    phone = phone.replace(/[^\d+]/g, '');
+                    if (!phone) {
+                        alert('Phone number must contain digits or +.');
+                    }
+                }
+            }
+            // Append phone to chat name if not already present
+            if (!chat.name.includes(phone)) {
+                chat.name += ` (${phone})`;
+                renderChatTabs();
+            } else {
+                alert('This phone number is already in the chat name.');
+            }
+        };
+        btn.appendChild(addUser);
         tabs.appendChild(btn);
     });
-    // Add "+" button for new chat
+    // Add "New Chat" button for new chat
     const addBtn = document.createElement('button');
-    addBtn.textContent = '＋';
+    addBtn.textContent = 'New Chat';
     addBtn.title = 'Add new chat';
-    addBtn.style.padding = '8px 14px';
+    addBtn.style.padding = '8px 18px';
     addBtn.style.borderRadius = '8px';
     addBtn.style.border = 'none';
     addBtn.style.background = '#009688';
@@ -111,22 +151,34 @@ function renderChatTabs() {
     addBtn.style.cursor = 'pointer';
     addBtn.onclick = () => {
         let name = prompt('Enter new chat name:');
-        if (name && name.trim()) {
-            name = name.trim();
-            // Generate unique id
-            let baseId = name.toLowerCase().replace(/\s+/g, '');
-            let id = baseId;
-            let n = 2;
-            while (chatList.some(c => c.id === id)) {
-                id = baseId + n;
-                n++;
+        if (!name || !name.trim()) return;
+        name = name.trim();
+        let phone = '';
+        while (!phone) {
+            phone = prompt('Enter phone number for this chat (required):');
+            if (!phone || !phone.trim()) {
+                alert('Phone number is required!');
+                phone = '';
+            } else {
+                phone = phone.replace(/[^\d+]/g, ''); // keep only digits and plus
+                if (!phone) {
+                    alert('Phone number must contain digits or +.');
+                }
             }
-            chatList.push({ id, name });
-            saveMessages();
-            currentChatId = id;
-            loadMessages(currentChatId);
-            renderChatTabs();
         }
+        name += ` (${phone})`;
+        let baseId = name.toLowerCase().replace(/\s+/g, '');
+        let id = baseId;
+        let n = 2;
+        while (chatList.some(c => c.id === id)) {
+            id = baseId + n;
+            n++;
+        }
+        chatList.push({ id, name });
+        saveMessages();
+        currentChatId = id;
+        loadMessages(currentChatId);
+        renderChatTabs();
     };
     tabs.appendChild(addBtn);
 }
@@ -171,9 +223,20 @@ chatForm.onsubmit = function(e) {
     chatInput.value = '';
 };
 
-// On load, render tabs and load first chat
+// Send message on Enter (without Shift)
+chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.dispatchEvent(new Event('submit'));
+    }
+});
+
+// On load, render tabs and load first chat (if any)
 renderChatTabs();
-loadMessages(currentChatId);
+if (chatList.length) {
+    currentChatId = chatList[0].id;
+    loadMessages(currentChatId);
+}
 
 // Listen for changes from other tabs (simulate multi-user on same device)
 window.addEventListener('storage', function(e) {
@@ -221,4 +284,21 @@ function hideLoadingScreen() {
 showLoadingScreen();
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(hideLoadingScreen, 1000);
+});
+
+// Auto-switch UI based on device, no redirect, just switch logic
+window.addEventListener('DOMContentLoaded', () => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+        document.body.classList.add('mobile-ui');
+        // Detect brand for color scheme
+        let brand = 'turquoise';
+        if (/iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent)) brand = 'apple';
+        else if (/Samsung/i.test(navigator.userAgent)) brand = 'samsung';
+        else if (/Pixel|Google/i.test(navigator.userAgent)) brand = 'google';
+        if (brand !== 'turquoise') document.body.classList.add(brand);
+        // else just use default turquoise
+    } else {
+        document.body.classList.remove('mobile-ui', 'apple', 'samsung', 'google');
+    }
 });

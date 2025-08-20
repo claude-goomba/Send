@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Mobile - Chat App</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('service-worker.js');
+        });
+      }
+    </script>
+</head>
+<body>
+    <div id="main-bg">
+        <div id="sidebar">
+            <div class="emoji">😀</div>
+            <div class="emoji">😂</div>
+            <div class="emoji">😍</div>
+            <div class="emoji">😎</div>
+            <div class="emoji">👍</div>
+            <div class="emoji">🎉</div>
+            <div class="emoji">🥳</div>
+            <div class="emoji">😢</div>
+            <div class="emoji">😡</div>
+            <div class="emoji">🙏</div>
+            <div class="emoji">🔥</div>
+            <div class="emoji">💯</div>
+            <div class="emoji">🤖</div>
+        </div>
+        <div id="chat-container">
+            <div id="chat-header">Send</div>
+            <div id="chat-messages"></div>
+            <form id="chat-form" autocomplete="off">
+                <textarea id="chat-input" placeholder="Type a message... 😊" autocomplete="off" rows="3" style="resize:vertical;"></textarea>
+                <button id="camera-btn" type="button" title="Send photo">📷</button>
+                <button id="chat-btn" type="submit">Send</button>
+            </form>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none;" />
+        </div>
+    </div>
+    <script src="sendmobile.js"></script>
+    <script>
+    // Built-in sidebar emoji click
+    document.querySelectorAll('#sidebar .emoji').forEach(btn => {
+        btn.onclick = function() {
+            const chatInput = document.getElementById('chat-input');
+            chatInput.value += btn.textContent;
+            chatInput.focus();
+        };
+    });
+    // Camera usage
+    const cameraBtn = document.getElementById('camera-btn');
+    const cameraInput = document.getElementById('camera-input');
+    cameraBtn.onclick = () => cameraInput.click();
+    cameraInput.onchange = function() {
+        if (cameraInput.files && cameraInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgTag = `<img src='${e.target.result}' style='max-width:180px; max-height:120px; border-radius:10px; box-shadow:0 2px 8px #0002; margin:4px 0;' />`;
+                chatInput.value += '\n' + imgTag;
+                chatInput.focus();
+            };
+            reader.readAsDataURL(cameraInput.files[0]);
+        }
+    };
+
+    // PWA install prompt
+    let deferredPrompt;
+    const installBanner = document.createElement('div');
+    installBanner.id = 'install-banner';
+    installBanner.style = 'position:fixed;bottom:0;left:0;right:0;background:#1de9b6;color:#fff;padding:12px;text-align:center;z-index:1000;box-shadow:0 -2px 8px #0002;display:none;';
+    installBanner.innerHTML = 'Install Send Chat App for a better experience! <button id="install-btn" style="margin-left:12px;padding:6px 16px;background:#fff;color:#1de9b6;border:none;border-radius:4px;font-weight:bold;">Install</button>';
+    document.body.appendChild(installBanner);
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBanner.style.display = 'block';
+    });
+    document.getElementById('install-btn').onclick = function() {
+        installBanner.style.display = 'none';
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(() => {
+                deferredPrompt = null;
+            });
+        }
+    };
+    window.addEventListener('appinstalled', () => {
+        installBanner.style.display = 'none';
+    });
+    </script>
+</body>
+</html>

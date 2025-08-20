@@ -316,3 +316,128 @@ body {
         padding: 0 10px;
     }
 }
+body.mobile-ui #chat-tabs {
+    display: none !important;
+}
+body.mobile-ui #sidebar {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    padding: 8px 0;
+}
+body.mobile-ui #chat-container {
+    margin-left: 48px;
+    width: calc(100vw - 48px);
+    max-width: calc(100vw - 48px);
+    height: 100vh;
+    max-height: 100vh;
+    padding: 0;
+}
+body.mobile-ui #chat-header {
+    font-size: 1.2em;
+    padding: 16px 0 12px 0;
+    gap: 4px;
+}
+body.mobile-ui #chat-messages {
+    padding: 16px 0 8px 0;
+    font-size: 0.98em;
+}
+body.mobile-ui .msg {
+    padding: 0 8px;
+}
+body.mobile-ui .bubble {
+    padding: 8px 12px;
+    border-radius: 16px;
+    max-width: 90vw;
+    font-size: 1em;
+}
+body.mobile-ui #chat-form {
+    padding: 0 8px;
+    gap: 4px;
+}
+body.mobile-ui #chat-input {
+    padding: 10px;
+    font-size: 1em;
+    border-radius: 8px;
+}
+body.mobile-ui #chat-btn {
+    padding: 10px 16px;
+    font-size: 1em;
+    border-radius: 8px;
+}
+body.mobile-ui .emoji {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1em;
+    padding: 4px;
+}
+body.mobile-ui #update-screen, body.mobile-ui #loading-screen {
+    font-size: 1em;
+    padding: 0 10px;
+}
+body.mobile-ui.apple {
+    --primary: #007aff;
+    --primary-dark: #0051a8;
+    --primary-light: #e3f0ff;
+    --bubble-me: #007aff;
+    --bubble-them: #e5e5ea;
+    --header-bg: #f7f7f7;
+    --header-color: #222;
+}
+body.mobile-ui.samsung {
+    --primary: #1428a0;
+    --primary-dark: #0d1a6b;
+    --primary-light: #eaf0ff;
+    --bubble-me: #1428a0;
+    --bubble-them: #eaf0ff;
+    --header-bg: #f2f6ff;
+    --header-color: #222;
+}
+body.mobile-ui.google {
+    --primary: #4285f4;
+    --primary-dark: #174ea6;
+    --primary-light: #e8f0fe;
+    --bubble-me: #4285f4;
+    --bubble-them: #e8f0fe;
+    --header-bg: #fff;
+    --header-color: #222;
+}
+body.mobile-ui {
+    --primary: #1de9b6;
+    --primary-dark: #009688;
+    --primary-light: #e0f7fa;
+    --bubble-me: #1de9b6;
+    --bubble-them: #00bcd4;
+    --header-bg: #009688;
+    --header-color: #fff;
+}
+body.mobile-ui #chat-header {
+    background: var(--header-bg);
+    color: var(--header-color);
+}
+body.mobile-ui .msg.me .bubble {
+    background: var(--bubble-me) !important;
+    color: #fff;
+}
+body.mobile-ui .msg.them .bubble {
+    background: var(--bubble-them) !important;
+    color: #222;
+}
+body.mobile-ui #chat-btn {
+    background: var(--primary);
+}
+body.mobile-ui #chat-btn:hover {
+    background: var(--primary-dark);
+}
+body.mobile-ui #sidebar {
+    background: var(--primary);
+}
+body.mobile-ui .emoji {
+    background: var(--primary);
+}
+body.mobile-ui .emoji:hover {
+    background: var(--primary-dark);
+}
+body.mobile-ui #chat-input {
+    background: var(--primary-light);
+}
