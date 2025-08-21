@@ -1,33 +1,50 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import time
+# Combined HTTP and WebSocket server for Send Chat App
+import asyncio
+import json
+import os
+from aiohttp import web
+import mimetypes
 
-app = Flask(__name__)
-CORS(app)
+PORT = 8000
+messages = []
+clients = set()
 
-# In-memory chat storage (for demo only, not persistent)
-chats = {}
+# WebSocket handler
+async def websocket_handler(request):
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+    clients.add(ws)
+    try:
+        await ws.send_json({"type": "messages", "messages": messages})
+        async for msg in ws:
+            if msg.type == web.WSMsgType.TEXT:
+                data = json.loads(msg.data)
+                if data.get("type") == "message":
+                    message = {"sender": data["sender"], "text": data["text"]}
+                    messages.append(message)
+                    # Broadcast to all
+                    for client in clients:
+                        await client.send_json({"type": "message", "message": message})
+            elif msg.type == web.WSMsgType.ERROR:
+                print(f'WebSocket connection closed with exception {ws.exception()}')
+    finally:
+        clients.remove(ws)
+    return ws
 
-@app.route('/api/chats', methods=['GET'])
-def get_chats():
-    return jsonify(list(chats.keys()))
+# Serve static files from current directory
+def setup_static_routes(app):
+    static_dir = os.path.dirname(os.path.abspath(__file__))
+    app.router.add_static('/', static_dir, show_index=True)
 
-@app.route('/api/chats/<chat_id>', methods=['GET'])
-def get_chat(chat_id):
-    return jsonify(chats.get(chat_id, []))
+# Serve index.html on root
+async def index(request):
+    return web.FileResponse('index.html')
 
-@app.route('/api/chats/<chat_id>', methods=['POST'])
-def post_message(chat_id):
-    data = request.json
-    msg = {
-        'sender': data.get('sender', 'unknown'),
-        'text': data.get('text', ''),
-        'time': data.get('time', time.strftime('%H:%M'))
-    }
-    if chat_id not in chats:
-        chats[chat_id] = []
-    chats[chat_id].append(msg)
-    return jsonify({'ok': True, 'msg': msg})
+app = web.Application()
+app.router.add_get('/', index)
+app.router.add_get('/ws', websocket_handler)
+setup_static_routes(app)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    print(f"Server running on http://localhost:{PORT}/ (WebSocket at ws://localhost:{PORT}/ws)")
+    web.run_app(app, port=PORT)
