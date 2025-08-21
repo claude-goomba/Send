@@ -13,11 +13,11 @@ This is a modern, installable chat app with emoji, camera/photo upload, and offl
 - Cross-device chat sync
 
 ## Usage
-- Open `sendmobile.html` for the mobile-optimized version.
+- Open http://localhost:8000 for main app
 - Add to home screen when prompted for the best experience.
 
 ## Development
-- Edit `sendmobile.html` and `sendmobile.js` for the mobile UI.
+- Edit `index.html` and `sendmobile.js` for the mobile UI.
 - Service worker and manifest are in the same folder.
 
 ## Python Environment Setup
